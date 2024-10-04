@@ -1,0 +1,4 @@
+/node_modules
+.env
+/errorLogger.txt
+/requestLogger.txt
