@@ -9,12 +9,12 @@ adminRouter.put('/updatesentence', checkAuth,adminFunctions.updateSentence);
 adminRouter.delete('/deletesentence',checkAuth, adminFunctions.deleteSentence);
 
 adminRouter.get('/readsentences', checkAuth, adminFunctions.readSentences);
-
+adminRouter.post("/importChapter",checkAuth,adminFunctions.importChapter);
 
 
 adminRouter.all('*', (req, res) => {
     return res.status(400).send({
-        message:"Invalid request"
+        message:"Invalid request url"
     })
     
 })

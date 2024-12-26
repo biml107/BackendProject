@@ -23,6 +23,12 @@ userRouter.get('/getprofile', checkAuth, userFunctions.getProfile);
 userRouter.get('/getbook', userFunctions.getBook);
 
 userRouter.get('/gethindibook', userFunctions.getEnglishBookWithHindi);
+userRouter.get("/getStandards",userFunctions.getStandards);
+userRouter.post("/getSubjects",userFunctions.getSubjects);
+userRouter.post("/getBooks",userFunctions.getBooks);
+userRouter.post("/getChapters",userFunctions.getChapters);
+userRouter.get("/getDropdownOptions",userFunctions.getDropdownOptions);
+
 userRouter.all('*', (req, res) => {
     return res.status(400).send({
         message:"Invalid request in userRouter"

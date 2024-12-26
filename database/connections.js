@@ -1,9 +1,11 @@
 import mongoose from 'mongoose'
 import session from "express-session";
 import connectMongoDBSession from "connect-mongodb-session";
+import mysql from 'mysql2'
 import dotenv from 'dotenv';
 dotenv.config();
 //import privateConstants from '../private_constants.js';
+
 
 const connection = {};
 
@@ -44,6 +46,8 @@ const store = new mongoDBStore({
     uri: `${mongoDatabaseURI}/${process.env.MONGO_DBNAME}`,
     collection: 'user_session'
 });
+
+
 connection.sessionMiddleware = () => {
     // 
     try {
@@ -74,4 +78,16 @@ connection.sessionMiddleware = () => {
 
     
 }
+
+connection.pool= mysql.createPool({
+    host:process.env.MYSQL_DB_HOST,
+    port:process.env.MYSQL_DB_PORT,
+    user:process.env.MYSQL_DB_USER,
+    password:process.env.MYSQL_DB_PASSWORD,
+    database:process.env.MYSQL_DB_NAME,
+    waitForConnections:true,
+    connectionLimit:10,
+    queueLimit:0,
+    multipleStatements:true
+})
 export {connection}

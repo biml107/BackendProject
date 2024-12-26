@@ -12,16 +12,7 @@ const sentenceSchema = new Schema({
         type: String,
         required:true
     },
-   standard:{
-    type:Number,
-    required:true,
-    
-    },
-    bookName: {
-        type: String,
-        required:false
-    },
-   chapter:{
+   chapterId:{
     type:Number,
     required:true,
 
@@ -31,9 +22,17 @@ const sentenceSchema = new Schema({
     required:true
 
     },
-    position: {
+    paragraphPosition: {
         type: Number,
-        default:2
+        default:2,
+        validate: {
+            validator: function(value) {
+                if (!value) return true;
+                // Only allow values 1 or 2
+                return value === 1 || value === 2;
+            },
+            message: 'paragraphPosition must be 1 or 2'
+        }
         
    },
    value:{
@@ -46,6 +45,13 @@ const sentenceSchema = new Schema({
 
 })
 
+// Pre-save hook to set paragraphPosition to 2 if an invalid value is given
+sentenceSchema.pre('save', function(next) {
+    if (this.paragraphPosition !== 1 && this.paragraphPosition !== 2) {
+        this.paragraphPosition = 2; // Set default value
+    }
+    next();
+});
 const sentenceCollection = mongoose.model('sentence', sentenceSchema);
 export default sentenceCollection;
 
