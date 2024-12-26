@@ -1,6 +1,6 @@
 import userCollection from "../schemas/userSchema.js";
 import validator from "validator";
-
+import {connection} from "../database/connections.js"
 
 let userModel = class {
     userId;
@@ -295,7 +295,110 @@ let userModel = class {
         })
     }
 
+    static getStandards(){
+        return new Promise(async (resolve,reject)=>{
+            try{
+                const query= `call uspGetStandards();`
+                connection.pool.query(query,(error,results)=>{
+                    if(error){
+                        reject(error);
+                    }
+                    else{
+                        resolve(results[0]);
+                    }
+                })
+
+            }
+            catch(err){
+                return reject(err);
+            }
+
+        })
+    }
+    static getSubjects(standard_id){
+        return new Promise(async (resolve,reject)=>{
+            try{
+                const query= `call getSubjects(?);`
+                connection.pool.query(query,[standard_id],(error,results)=>{
+                    if(error){
+                        reject(error);
+                    }
+                    else{
+                        resolve(results[0]);
+                    }
+                })
+
+            }
+            catch(err){
+                return reject(err);
+            }
+
+        })
+    }
+    static getBooks(standard_id,subject_id){
+        return new Promise(async (resolve,reject)=>{
+            try{
+                const query= `call getBooks(?,?);`
+                connection.pool.query(query,[standard_id,subject_id],(error,results)=>{
+                    if(error){
+                        reject(error);
+                    }
+                    else{
+                        resolve(results[0]);
+                    }
+                })
+
+            }
+            catch(err){
+                return reject(err);
+            }
+
+        })
+    }
     
+    static getChapters(book_id){
+        return new Promise(async (resolve,reject)=>{
+            try{
+                const query= `call getChapters(?);`
+                connection.pool.query(query,[book_id],(error,results)=>{
+                    if(error){
+                        reject(error);
+                    }
+                    else{
+                        resolve(results[0]);
+                    }
+                })
+
+            }
+            catch(err){
+                return reject(err);
+            }
+
+        })
+    }
+
+    
+    // static getDropdownOptions(){
+    //     return new Promise(async (resolve,reject)=>{
+    //         try{
+    //             const query= `call uspGetStandards();`
+    //             connection.pool.query(query,(error,results)=>{
+    //                 if(error){
+    //                     reject(error);
+    //                 }
+    //                 else{
+    //                      resolve(results[0]);
+    //                 }
+    //             })
+
+    //         }
+    //         catch(err){
+    //             return reject(err);
+    //         }
+
+    //     })
+    // }
 
 }
+
 export default userModel;

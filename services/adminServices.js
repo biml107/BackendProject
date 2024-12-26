@@ -14,27 +14,22 @@ adminFunctions.addSentence = async function (req, res,next)
 
     try {
         
-        let { standard, chapter, bookName, sequence, position, value } = req.body;
+        //taking input chapterId as reference for sentence as unique key to identify , sequence is for ordernumber of sentence for that chapter, paragraphPosition is for paragraph starting end info
+        let { chapterId, sequence, paragraphPosition, value } = req.body;
 
-        standard = parseInt(standard);
-        chapter = parseInt(chapter);
+        
+        chapterId=parseInt(chapterId);
         sequence = parseInt(sequence);
-        position = parseInt(position);
-
+        paragraphPosition=paragraphPosition?parseInt(paragraphPosition):null;
+        
         const userId = req.session.user.userId;
-        if (!validationFunctions.checkIfAnyFieldEmpty([standard, chapter, bookName, sequence, position, value]))
+        if (!validationFunctions.checkIfAnyFieldEmpty([chapterId,sequence,value]))
         {
             return res.status(400).send({
                 message:"All Fields are required"
             })
         }
 
-       
-       
-
-
-        bookName = validator.escape(bookName);
-        bookName = validationFunctions.removeExtraWhitaspace(bookName);
         
         value = validator.escape(value);
         value = validationFunctions.organiseSentence(validationFunctions.removeExtraWhitaspace(value));
@@ -42,8 +37,7 @@ adminFunctions.addSentence = async function (req, res,next)
 
 
         let query = {
-            standard,
-            chapter,bookName,sequence,position,
+            chapterId,sequence
         }
 
 //checking if the sentence is already present
@@ -55,32 +49,28 @@ adminFunctions.addSentence = async function (req, res,next)
                 message: "Sentence already Added",
                 sentenceDetails: {
                      sentenceId: dbSentence.uuid,
-                     standard: dbSentence.standard,
-                     bookName: he.decode(dbSentence.bookName),
-                     chapter: dbSentence.chapter,
+                     chapterId: dbSentence.chapterId,
                      sequence: dbSentence.sequence,
-                     position: dbSentence.position,
+                     paragraphPosition: dbSentence.paragraphPosition,
                      value: he.decode(dbSentence.value)
                 }
             })
             
         }
         
+// if sentence not exist 
+        const sentence = new sentenceModel({ userId,chapterId, sequence, paragraphPosition, value});
 
-        const sentence = new sentenceModel({ userId,standard, chapter, bookName, sequence, position, value});
-
-
+        
          dbSentence = await sentence.addSentence();
          
         return res.status(200).send({
             message: "Sentence Saved Successfully",
             sentenceDetails: {
                 sentenceId: dbSentence.uuid,
-                standard: dbSentence.standard,
-                bookName: he.decode(dbSentence.bookName),
-                chapter: dbSentence.chapter,
+                chapterId: dbSentence.chapterId,
                 sequence: dbSentence.sequence,
-                position: dbSentence.position,
+                paragraphPosition: dbSentence.paragraphPosition,
                 value: he.decode(dbSentence.value)
             }
         })
@@ -106,12 +96,12 @@ adminFunctions.updateSentence = async function (req,res,next) {
         
 
         
-        let { sentenceId, standard, chapter, bookName, sequence, position, value } = req.body;
+        let { sentenceId , chapterId,sequence, paragraphPosition, value } = req.body;
         
-        standard = parseInt(standard);
-        chapter = parseInt(chapter);
+        
+        chapterId = parseInt(chapterId);
         sequence = parseInt(sequence);
-        position = parseInt(position);
+        paragraphPosition = parseInt(paragraphPosition);
             
             const userId = req.session.user.userId;
            
@@ -137,18 +127,16 @@ adminFunctions.updateSentence = async function (req,res,next) {
 
         //updating sentence
 
-        const objectOfSentenceModel = new sentenceModel({ userId, sentenceId, standard, chapter, bookName, sequence, position, value }); 
+        const objectOfSentenceModel = new sentenceModel({ userId, sentenceId, chapterId, sequence, paragraphPosition, value }); 
         
          dbSentence = await objectOfSentenceModel.updateSentence();
            return res.status(200).send({
              message: "Sentence Updated Successfully",
              sentenceDetails: {
                  sentenceId: dbSentence.uuid,
-                 standard: dbSentence.standard,
-                 bookName: he.decode(dbSentence.bookName),
-                 chapter: dbSentence.chapter,
+                 chapterId: dbSentence.chapterId,
                  sequence: dbSentence.sequence,
-                 position: dbSentence.position,
+                 paragraphPosition: dbSentence.paragraphPosition,
                  value: he.decode(dbSentence.value)
              }
  
@@ -159,6 +147,7 @@ adminFunctions.updateSentence = async function (req,res,next) {
     }
     catch (err)
     {
+        console.log("Error in update sen",err);
         next(err);
     }
 
@@ -269,6 +258,45 @@ adminFunctions.readSentences = async function (req,res,next) {
         
 
 
+    }
+    catch (err)
+    {
+        next(err);
+    }
+
+}
+adminFunctions.importChapter= async function (req, res, next) {
+
+    try {
+         
+        const {text,chapterId}=req.body
+        const userId = req.session.user.userId;
+          let availableSequence= await sentenceModel.findHeighestSequence(chapterId);
+           
+          const sentences = text.match(/[^\.!\?]+[\.!\?]+/g);
+          let sentenceObj;
+          //const sentence = new sentenceModel({ userId,chapterId, sequence, paragraphPosition, value});
+          for (const [index, sentence] of sentences.entries())  {
+            // Trim any extra spaces from the sentence
+            ++availableSequence;
+            let trimmedSentence = sentence.trim();
+             
+            sentenceObj= new sentenceModel({ userId,chapterId, sequence:availableSequence, value:trimmedSentence});
+            let response =await sentenceObj.addSentence();
+            
+            
+        };
+
+
+         // const chapters=await sentenceModel.importChapter(chapterId,text);
+   
+
+        
+        //console.log(bookWithHindi);
+        return res.status(200).send({
+            message: "books imported successfully",
+            
+        })
     }
     catch (err)
     {

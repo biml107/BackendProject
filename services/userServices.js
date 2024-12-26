@@ -648,14 +648,14 @@ userFunctions.getBook = async function (req,res,next) {
         
 
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || 100;
 
-        const standard = parseInt(req.query.class);
-        const chapter = parseInt(req.query.chapter);
-        const bookName = req.query.bookName;
+       
+        const chapterId = parseInt(req.query.chapterId);
+       
 
         
-        if (!validationFunctions.checkIfAnyFieldEmpty([standard, chapter, bookName]))
+        if (!validationFunctions.checkIfAnyFieldEmpty([chapterId]))
         {
             return res.status(400).send({
                 message:"Invalid Request"
@@ -663,7 +663,7 @@ userFunctions.getBook = async function (req,res,next) {
         }
         
         let query = {
-            standard,chapter,bookName
+            chapterId
         }
 
         const skip = (page - 1) * limit;
@@ -767,4 +767,132 @@ userFunctions.getEnglishBookWithHindi = async function (req, res, next) {
     }
     
 }
+
+userFunctions.getStandards= async function (req, res, next) {
+
+    try {
+          const standards=await userModel.getStandards();
+   
+
+        
+        //console.log(bookWithHindi);
+        return res.status(200).send({
+            message: "standards fetched successsfully",
+            data:standards
+        })
+    }
+    catch (err)
+    {
+        next(err);
+    }
+
+}
+
+userFunctions.getSubjects= async function (req, res, next) {
+
+    try {
+        const {standard_id}=req.body
+          const subjects=await userModel.getSubjects(standard_id);
+   
+
+        
+        //console.log(bookWithHindi);
+        return res.status(200).send({
+            message: "subjects fetched successsfully",
+            data:subjects
+        })
+    }
+    catch (err)
+    {
+        next(err);
+    }
+
+}
+userFunctions.getBooks= async function (req, res, next) {
+
+    try {
+        const {standard_id,subject_id}=req.body
+          const books=await userModel.getBooks(standard_id,subject_id);
+   
+
+        
+        //console.log(bookWithHindi);
+        return res.status(200).send({
+            message: "books fetched successsfully",
+            data:books
+        })
+    }
+    catch (err)
+    {
+        next(err);
+    }
+
+}
+userFunctions.getChapters= async function (req, res, next) {
+
+    try {
+        const {book_id}=req.body
+          const chapters=await userModel.getChapters(book_id);
+   
+
+        
+        //console.log(bookWithHindi);
+        return res.status(200).send({
+            message: "books fetched successsfully",
+            data:chapters
+        })
+    }
+    catch (err)
+    {
+        next(err);
+    }
+
+}
+
+userFunctions.getDropdownOptions= async function (req, res, next) {
+
+    try {
+         let DropdownOptions;
+
+          const standards=await userModel.getStandards();
+         // console.log("standards",standards)
+          const standardsWithSubjects =await  Promise.all(
+
+            standards.map(async(standard)=>{
+                     //console.log("standard",standard);
+                const subjects=await userModel.getSubjects(standard.standard_id);
+                const subjectsWithBooks = await Promise.all(
+                    subjects.map(async(subject)=>{
+                        const books= await userModel.getBooks(standard.standard_id,subject.subject_id);
+                        return {
+                            ...subject,books
+                        }
+                    })
+                )
+                //console.log("subjectsWithBooks",JSON.stringify(standard.standard_id,subjectsWithBooks));
+                return {
+                    ...standard,
+                    subjects: subjectsWithBooks,
+                };
+
+            })
+          )
+
+          //console.log("ffff",JSON.stringify(standardsWithSubjects));
+
+        
+        //console.log(bookWithHindi);
+        return res.status(200).send({
+            message: "standards fetched successsfully",
+            data:standardsWithSubjects
+        })
+    }
+    catch (err)
+    {
+        next(err);
+    }
+
+}
+
+
 export default userFunctions;

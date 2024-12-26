@@ -5,21 +5,17 @@ import hindiCollection from "../schemas/hindiSchema.js";
 let Sentence = class {
     userId;
     sentenceId;
-    standard;
-    bookName;
-    chapter;
+    chapterId;
     sequence;
-    position;
+    paragraphPosition;
     value;
     hindi;
-    constructor({ sentenceId, standard, bookName, chapter, sequence, position, value,userId }) {
+    constructor({ sentenceId, chapterId, sequence, paragraphPosition, value,userId }) {
         this.userId = userId;
         this.sentenceId = sentenceId;
-        this.standard= standard;
-        this.bookName=bookName;
-        this.chapter=chapter;
+        this.chapterId=chapterId;
         this.sequence=sequence;
-        this.position=position;
+        this.paragraphPosition=paragraphPosition;
         this.value = value;
         
     }
@@ -33,11 +29,9 @@ let Sentence = class {
             try {
                  const sentence = new sentenceCollection({
                     userId: this.userId,
-                    standard: this.standard,
-                    bookName: this.bookName,
-                    chapter: this.chapter,
+                    chapterId: this.chapterId,
                     sequence: this.sequence,
-                    position: this.position,
+                    paragraphPosition: this.paragraphPosition,
                     value: this.value
     
     
@@ -48,7 +42,7 @@ let Sentence = class {
 
             }
             catch (err) {
-                
+             
                 return reject(err);
             }
 
@@ -67,24 +61,23 @@ let Sentence = class {
 
                 const objectOfAvailableFields =
                 {
-                    ...(this.standard && { standard:this.standard }),
-                    ...(this.chapter && { chapter:this.chapter }),    
-                    ...(this.bookName && { bookName: this.bookName }), 
+                    
+                    ...(this.chapterId && { chapterId:this.chapterId }),    
                     ...(this.sequence && { sequence:this.sequence }), 
-                    ...(this.position && { position:this.position }), 
+                    ...(this.paragraphPosition && { positparagraphPositionion:this.paragraphPosition }), 
                     ...(this.value && { value: this.value})
 
                   }
     
-     
+     //handling edge case , reducing database call if no any value to update 
                         if (Object.keys(objectOfAvailableFields).length === 0) {
                             return res.status(400).send({
                                 message: "Nothing to update"
                             })
                         }
 
-
-                const dbSentence = await sentenceCollection.findOneAndUpdate({uuid:this.sentenceId, userId:this.userId},objectOfAvailableFields,{ returnDocument: 'after' });
+//if something available for update
+                const dbSentence = await sentenceCollection.findOneAndUpdate({uuid:this.sentenceId},objectOfAvailableFields,{ returnDocument: 'after' });
                 return resolve(dbSentence);
            
             }
@@ -110,10 +103,10 @@ let Sentence = class {
     }
 
     deleteSentence() {
-         
+         //in this later i have to implement the reference key facility . before deleting i have to check if any reference present in hindi and explaination collection deletion should notallow
         return new Promise(async(resolve,reject)=>{
             try{
-            const dbSentence= await sentenceCollection.findOneAndDelete({uuid:this.sentenceId, userId:this.userId});
+            const dbSentence= await sentenceCollection.findOneAndDelete({uuid:this.sentenceId});
             return resolve(dbSentence);
             }
             catch(err){
@@ -169,6 +162,28 @@ let Sentence = class {
        })
        
     }
+
+    static findHeighestSequence({chapterId}) {
+        
+        return new Promise(async (resolve, reject) => {
+            
+            try {
+                 
+                const highestSequenceDoc = await sentenceCollection.findOne({chapterId}).sort({ sequence: -1 }).limit(1).exec();
+                
+                return resolve(highestSequenceDoc ? highestSequenceDoc.sequence : 0);
+                
+ 
+ 
+            }
+            catch (error)
+            {
+                
+                return reject(error);
+            }
+        })
+        
+     }
 
     static getEnglishBookWithHindi({ query, skip, limit }) {
         return new Promise(async (resolve, reject) => {
