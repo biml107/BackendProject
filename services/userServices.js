@@ -555,6 +555,7 @@ userFunctions.loginUser = async function (req, res, next) {
   
     try {
         const { loginId, password } = req.body;
+         
   
         if(!loginId||!password){
          
@@ -586,7 +587,13 @@ userFunctions.loginUser = async function (req, res, next) {
              
         }
         return res.status(200).send({
-            message:"login successfull"
+            message:"login successfull",
+            user:{
+                username: dbUser.username,
+                email: dbUser.email,
+                name: dbUser.name,
+                uuid:dbUser.uuid
+            }
          })
 
 
@@ -732,15 +739,15 @@ userFunctions.getEnglishBookWithHindi = async function (req, res, next) {
        
 
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || 50;
 
-        const standard = parseInt(req.query.class);
-        const chapter = parseInt(req.query.chapter);
-        const bookName = req.query.bookName;
+
+        const chapterId = parseInt(req.query.chapterId);
+    
 
 
         
-        if (!validationFunctions.checkIfAnyFieldEmpty([standard, chapter, bookName]))
+        if (!validationFunctions.checkIfAnyFieldEmpty([chapterId]))
         {
             return res.status(400).send({
                 message:"Invalid Request"
@@ -748,7 +755,7 @@ userFunctions.getEnglishBookWithHindi = async function (req, res, next) {
         }
         
         let query = {
-            standard,chapter,bookName
+            chapterId
         }
 
         const skip = (page - 1) * limit;
