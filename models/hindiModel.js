@@ -160,6 +160,26 @@ let hindiSentenceModel = class {
 
         })
     }
+
+    static findHindiTranslates({ query,skip,limit }) {
+        return new Promise(async (resolve, reject) => {
+            
+            try {
+                const dbHindiSentences = await hindiCollection.find( query,{_id:0,__v:0} )
+                .sort('creationDateTime')
+                .skip(skip)
+                .limit(limit);
+             
+            return resolve(dbHindiSentences);
+
+            }
+            catch (err)
+            {
+                return reject(err);
+            }
+
+        })
+    }
 }
 
 

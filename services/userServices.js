@@ -110,7 +110,7 @@ userFunctions.addHindi = async function (req, res, next) {
 userFunctions.updateHindi = async function (req, res, next) {
     
     try {
-
+        
         let { hindiSentenceId, hindi, hindiExplain } = req.body;
         const userId = req.session.user.userId;
         if (!validationFunctions.checkIfAnyFieldEmpty([hindiSentenceId]))
@@ -648,7 +648,7 @@ userFunctions.getProfile = async function (req, res, next) {
     }
 }
 
-userFunctions.getBook = async function (req,res,next) {
+userFunctions.getEnglishBook = async function (req,res,next) {
     
     try {
         
@@ -694,35 +694,40 @@ userFunctions.getBook = async function (req,res,next) {
     }
 
 }
-userFunctions.getHindiTranslates = async function (req, res, next) {
+userFunctions.getHindiTranslatesOfSentence = async function (req, res, next) {
     
     try {
 
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
-        const standard = parseInt(req.query.class);
-        const chapter = parseInt(req.query.chapter);
-        const bookName = req.query.bookName;
+        const englishSentenceId = req.query.englishSentenceId;
 
         
-        if (!validationFunctions.checkIfAnyFieldEmpty([standard, chapter, bookName]))
+        if (!validationFunctions.checkIfAnyFieldEmpty([englishSentenceId]))
         {
             return res.status(400).send({
                 message:"Invalid Request"
             })
         }
+        if (!validationFunctions.validateUUID([englishSentenceId])) { 
+            return  res.status(400).send({
+                 message:"Invalid English Sentence Id"
+             })
+     
+        }
         
         let query = {
-            standard,chapter,bookName
+            englishSentenceId
         }
 
         const skip = (page - 1) * limit;
          
-        const dbHindiSentences = await hindiSentenceModel.findHindiBook({ query })
+        const dbHindiTranslates = await hindiSentenceModel.findHindiTranslates({ query,skip,limit })
 
         return res.status(200).send({
             message:"book fetched ",
+            data:dbHindiTranslates
         })
 
 
