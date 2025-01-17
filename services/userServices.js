@@ -573,7 +573,7 @@ userFunctions.loginUser = async function (req, res, next) {
             })
         }
         
-        const isMatch=password===dbUser.password?true:false;
+        const isMatch=await dbUser.comparePassword(password);;
         if(!isMatch)
         {
             return res.status(409).send({
@@ -592,7 +592,9 @@ userFunctions.loginUser = async function (req, res, next) {
                 username: dbUser.username,
                 email: dbUser.email,
                 name: dbUser.name,
-                uuid:dbUser.uuid
+                uuid:dbUser.uuid,
+                phoneNumber: dbUser.phoneNumber?dbUser.phoneNumber:null,
+                address:dbUser.address?dbUser.address:null
             }
          })
 
@@ -637,6 +639,7 @@ userFunctions.getProfile = async function (req, res, next) {
                 name: dbUser.name,
                 username: dbUser.username,
                 email: dbUser.email,
+                uuid:dbUser.uuid,
                 phoneNumber: dbUser.phoneNumber?dbUser.phoneNumber:null,
                 address:dbUser.address?dbUser.address:null
             }
