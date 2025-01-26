@@ -16,7 +16,8 @@ userRouter.delete('/deleteexplanation', checkAuth,userFunctions.deleteExplanatio
 
  
 userRouter.put('/updateprofile', checkAuth, userFunctions.updateUserDetails);
-
+userRouter.put('/incrementhindilikescount',checkAuth,userFunctions.incrementHindiLikesCount);
+userRouter.put('/decrementhindilikescount',checkAuth,userFunctions.decrementHindiLikesCount);
 userRouter.get('/getprofile', checkAuth, userFunctions.getProfile);
 
 

@@ -4,6 +4,7 @@ import sentenceModel from '../models/sentenceModel.js';
 import hindiSentenceModel from '../models/hindiModel.js';
 import explanationModel from '../models/explanationModel.js';
 import userModel from '../models/userModel.js';
+import HindiSentenceLikesModel from '../models/hindilikeModel.js';
 
 import validator from 'validator';
 import he from 'he';
@@ -161,6 +162,127 @@ userFunctions.updateHindi = async function (req, res, next) {
                 hindiExplain:dbHindiSentence.hindiExplain?he.decode(dbHindiSentence.hindiExplain):null
                 
             }
+
+        })
+        
+
+    
+
+        
+
+        
+    }
+    catch (err) {
+        next(err);
+
+    }
+}
+userFunctions.incrementHindiLikesCount = async function (req, res, next) {
+    
+    try {
+        
+        let { hindiSentenceId} = req.body;
+        const userId = req.session.user.userId;
+        const creationDateTime = new Date();
+        if (!validationFunctions.checkIfAnyFieldEmpty([hindiSentenceId]))
+        {
+            return  res.status(400).send({
+                message:"Bad Request"
+            })
+
+
+        }
+
+        if (!validationFunctions.validateUUID([hindiSentenceId])) {//here in array during updation i have to check userId also
+            return  res.status(400).send({
+                 message:"Invalid Hindi sentence Id"
+             })
+     
+        }
+        
+       
+
+        
+        const hindiSentenceLikesModelObject = new HindiSentenceLikesModel({ hindiSentenceId,userId,creationDateTime });
+        const dbHindiTranslateLike=await hindiSentenceLikesModelObject.addHindiLike();
+
+        if (!dbHindiTranslateLike)
+        {
+            
+            return res.status(403).send({
+                message:"Failed to update like"
+            })
+        }
+        
+        return res.status(200).send({
+            message: "like updated successfully",
+           
+           data:{
+            likedSentenceId:dbHindiTranslateLike.hindiSentenceId,
+            likedByUserId:dbHindiTranslateLike.likedByUserId,
+            
+           }
+
+        })
+        
+
+    
+
+        
+
+        
+    }
+    catch (err) {
+        next(err);
+
+    }
+}
+
+userFunctions.decrementHindiLikesCount = async function (req, res, next) {
+    
+    try {
+        
+        let { hindiSentenceId} = req.body;
+        const userId = req.session.user.userId;
+         
+        if (!validationFunctions.checkIfAnyFieldEmpty([hindiSentenceId]))
+        {
+            return  res.status(400).send({
+                message:"Bad Request"
+            })
+
+
+        }
+
+        if (!validationFunctions.validateUUID([hindiSentenceId])) {//here in array during updation i have to check userId also
+            return  res.status(400).send({
+                 message:"Invalid Hindi sentence Id"
+             })
+     
+        }
+        
+       
+
+         
+        const hindiSentenceLikesModelObject = new HindiSentenceLikesModel({ hindiSentenceId,userId });
+         
+        const dbHindiTranslateLike=await hindiSentenceLikesModelObject.deleteHindiLike();
+
+        if (!dbHindiTranslateLike)
+        {
+            
+            return res.status(403).send({
+                message:"failed to delet like"
+            })
+        }
+        
+        return res.status(200).send({
+            message: "like removed successfully",
+           data:{
+            likedSentenceId:dbHindiTranslateLike.hindiSentenceId,
+            likedByUserId:dbHindiTranslateLike.likedByUserId,
+            
+           }
 
         })
         
@@ -443,6 +565,7 @@ userFunctions.registerUser = async function (req, res, next) {
                 username: dbUserSave.username,
                 email: dbUserSave.email,
                 name: dbUserSave.name,
+                role:dbUserSave.role,
                 phoneNumber: dbUserSave.phoneNumber,
                 address: {
                     addressLine: dbUserSave.address.addressLine ,
@@ -594,6 +717,7 @@ userFunctions.loginUser = async function (req, res, next) {
                 name: dbUser.name,
                 uuid:dbUser.uuid,
                 phoneNumber: dbUser.phoneNumber?dbUser.phoneNumber:null,
+                role:dbUser.role,
                 address:dbUser.address?dbUser.address:null
             }
          })
@@ -641,6 +765,7 @@ userFunctions.getProfile = async function (req, res, next) {
                 email: dbUser.email,
                 uuid:dbUser.uuid,
                 phoneNumber: dbUser.phoneNumber?dbUser.phoneNumber:null,
+                role:dbUser.role,
                 address:dbUser.address?dbUser.address:null
             }
         })
@@ -700,7 +825,7 @@ userFunctions.getEnglishBook = async function (req,res,next) {
 userFunctions.getHindiTranslatesOfSentence = async function (req, res, next) {
     
     try {
-
+        const loggedInUserId = req.session?.user?.userId;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
@@ -721,12 +846,22 @@ userFunctions.getHindiTranslatesOfSentence = async function (req, res, next) {
         }
         
         let query = {
-            englishSentenceId
+            englishSentenceId,
+            isHidden:false,isDeleted:false
         }
 
         const skip = (page - 1) * limit;
          
-        const dbHindiTranslates = await hindiSentenceModel.findHindiTranslates({ query,skip,limit })
+        if(loggedInUserId){
+       //console.log("loggedinuserid",loggedInUserId);
+            const dbHindiTranslates = await hindiSentenceModel.findHindiTranslatesIfUserLoggedIn({ query,skip,limit,loggedInUserId })
+
+            return res.status(200).send({
+                message:"book fetched ",
+                data:dbHindiTranslates
+            })
+        }
+         const dbHindiTranslates = await hindiSentenceModel.findHindiTranslates({ query,skip,limit })
 
         return res.status(200).send({
             message:"book fetched ",
