@@ -4,10 +4,11 @@ import sentenceModel from '../models/sentenceModel.js';
 import hindiSentenceModel from '../models/hindiModel.js';
 import explanationModel from '../models/explanationModel.js';
 import userModel from '../models/userModel.js';
+import HindiSentenceLikesModel from '../models/hindilikeModel.js';
 
 import validator from 'validator';
 import he from 'he';
-
+const HINDI_SENTENCE_SIZE=10;
 
 const userFunctions = {};
 
@@ -57,7 +58,8 @@ userFunctions.addHindi = async function (req, res, next) {
 
         //checking if the english sentence is present or not
 
-        const dbEnglishSentence = sentenceModel.findSentenceById({ sentenceId: englishSentenceId });
+        const dbEnglishSentence = await sentenceModel.findSentenceById({ sentenceId: englishSentenceId });
+         
         if (!dbEnglishSentence)
         {
             
@@ -66,7 +68,11 @@ userFunctions.addHindi = async function (req, res, next) {
             //     message:"English Sentence not availabe"
             // })
         }
-        
+        if(hindi.length>dbEnglishSentence.value.length*HINDI_SENTENCE_SIZE||hindiExplain.length>dbEnglishSentence.value.length*HINDI_SENTENCE_SIZE*2){
+            return res.status(409).send({
+                message:"Exceed length"
+            })
+        }
 
         //checking number of hindi sentence added by the specefic user
         const countSentence = await hindiSentenceModel.countAddedHindi({ englishSentenceId, userId });
@@ -110,7 +116,7 @@ userFunctions.addHindi = async function (req, res, next) {
 userFunctions.updateHindi = async function (req, res, next) {
     
     try {
-
+        
         let { hindiSentenceId, hindi, hindiExplain } = req.body;
         const userId = req.session.user.userId;
         if (!validationFunctions.checkIfAnyFieldEmpty([hindiSentenceId]))
@@ -176,8 +182,167 @@ userFunctions.updateHindi = async function (req, res, next) {
 
     }
 }
+userFunctions.incrementHindiLikesCount = async function (req, res, next) {
+    
+    try {
+        
+        let { hindiSentenceId} = req.body;
+        const userId = req.session.user.userId;
+        const creationDateTime = new Date();
+        if (!validationFunctions.checkIfAnyFieldEmpty([hindiSentenceId]))
+        {
+            return  res.status(400).send({
+                message:"Bad Request"
+            })
+
+
+        }
+
+        if (!validationFunctions.validateUUID([hindiSentenceId])) {//here in array during updation i have to check userId also
+            return  res.status(400).send({
+                 message:"Invalid Hindi sentence Id"
+             })
+     
+        }
+        
+       
+
+        
+        const hindiSentenceLikesModelObject = new HindiSentenceLikesModel({ hindiSentenceId,userId,creationDateTime });
+        const dbHindiTranslateLike=await hindiSentenceLikesModelObject.addHindiLike();
+
+        if (!dbHindiTranslateLike)
+        {
+            
+            return res.status(403).send({
+                message:"Failed to update like"
+            })
+        }
+        
+        return res.status(200).send({
+            message: "like updated successfully",
+           
+           data:{
+            likedSentenceId:dbHindiTranslateLike.hindiSentenceId,
+            likedByUserId:dbHindiTranslateLike.likedByUserId,
+            
+           }
+
+        })
+        
+
+    
+
+        
+
+        
+    }
+    catch (err) {
+        next(err);
+
+    }
+}
+
+userFunctions.decrementHindiLikesCount = async function (req, res, next) {
+    
+    try {
+        
+        let { hindiSentenceId} = req.body;
+        const userId = req.session.user.userId;
+         
+        if (!validationFunctions.checkIfAnyFieldEmpty([hindiSentenceId]))
+        {
+            return  res.status(400).send({
+                message:"Bad Request"
+            })
+
+
+        }
+
+        if (!validationFunctions.validateUUID([hindiSentenceId])) {//here in array during updation i have to check userId also
+            return  res.status(400).send({
+                 message:"Invalid Hindi sentence Id"
+             })
+     
+        }
+        
+       
+
+         
+        const hindiSentenceLikesModelObject = new HindiSentenceLikesModel({ hindiSentenceId,userId });
+         
+        const dbHindiTranslateLike=await hindiSentenceLikesModelObject.deleteHindiLike();
+
+        if (!dbHindiTranslateLike)
+        {
+            
+            return res.status(403).send({
+                message:"failed to delet like"
+            })
+        }
+        
+        return res.status(200).send({
+            message: "like removed successfully",
+           data:{
+            likedSentenceId:dbHindiTranslateLike.hindiSentenceId,
+            likedByUserId:dbHindiTranslateLike.likedByUserId,
+            
+           }
+
+        })
+        
+
+    
+
+        
+
+        
+    }
+    catch (err) {
+        next(err);
+
+    }
+}
 
 userFunctions.deleteHindi = async function (req, res, next) {
+    
+    try {
+        const { hindiSentenceId } = req.body;
+        const userId = req.session.user.userId;
+        if (!validationFunctions.validateUUID([hindiSentenceId])) {
+            return  res.status(400).send({
+                 message:"Invalid mongo Id"
+             })
+     
+        }
+
+        const hindiModelObject = new hindiSentenceModel({ hindiSentenceId ,userId});
+
+        const dbHindiSentence = await hindiModelObject.deleteHindiTranslate();
+
+        if (!dbHindiSentence)
+        {
+            
+            return res.status(403).send({
+                message:"No Document found to delete or not authorised"
+            })
+        }
+        
+        return res.status(200).send({
+            message:"Sentence Deleted Successfully"
+        })
+
+
+
+
+
+    }
+    catch (err)
+    {
+        next(err)
+    }
+}
+userFunctions.softDeleteHindi = async function (req, res, next) {
     
     try {
         const { hindiSentenceId } = req.body;
@@ -443,6 +608,7 @@ userFunctions.registerUser = async function (req, res, next) {
                 username: dbUserSave.username,
                 email: dbUserSave.email,
                 name: dbUserSave.name,
+                role:dbUserSave.role,
                 phoneNumber: dbUserSave.phoneNumber,
                 address: {
                     addressLine: dbUserSave.address.addressLine ,
@@ -555,6 +721,7 @@ userFunctions.loginUser = async function (req, res, next) {
   
     try {
         const { loginId, password } = req.body;
+         
   
         if(!loginId||!password){
          
@@ -572,7 +739,7 @@ userFunctions.loginUser = async function (req, res, next) {
             })
         }
         
-        const isMatch=password===dbUser.password?true:false;
+        const isMatch=await dbUser.comparePassword(password);;
         if(!isMatch)
         {
             return res.status(409).send({
@@ -586,7 +753,16 @@ userFunctions.loginUser = async function (req, res, next) {
              
         }
         return res.status(200).send({
-            message:"login successfull"
+            message:"login successfull",
+            user:{
+                username: dbUser.username,
+                email: dbUser.email,
+                name: dbUser.name,
+                uuid:dbUser.uuid,
+                phoneNumber: dbUser.phoneNumber?dbUser.phoneNumber:null,
+                role:dbUser.role,
+                address:dbUser.address?dbUser.address:null
+            }
          })
 
 
@@ -630,7 +806,9 @@ userFunctions.getProfile = async function (req, res, next) {
                 name: dbUser.name,
                 username: dbUser.username,
                 email: dbUser.email,
+                uuid:dbUser.uuid,
                 phoneNumber: dbUser.phoneNumber?dbUser.phoneNumber:null,
+                role:dbUser.role,
                 address:dbUser.address?dbUser.address:null
             }
         })
@@ -641,7 +819,7 @@ userFunctions.getProfile = async function (req, res, next) {
     }
 }
 
-userFunctions.getBook = async function (req,res,next) {
+userFunctions.getEnglishBook = async function (req,res,next) {
     
     try {
         
@@ -687,35 +865,50 @@ userFunctions.getBook = async function (req,res,next) {
     }
 
 }
-userFunctions.getHindiTranslates = async function (req, res, next) {
+userFunctions.getHindiTranslatesOfSentence = async function (req, res, next) {
     
     try {
-
+        const loggedInUserId = req.session?.user?.userId;
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
 
-        const standard = parseInt(req.query.class);
-        const chapter = parseInt(req.query.chapter);
-        const bookName = req.query.bookName;
+        const englishSentenceId = req.query.englishSentenceId;
 
         
-        if (!validationFunctions.checkIfAnyFieldEmpty([standard, chapter, bookName]))
+        if (!validationFunctions.checkIfAnyFieldEmpty([englishSentenceId]))
         {
             return res.status(400).send({
                 message:"Invalid Request"
             })
         }
+        if (!validationFunctions.validateUUID([englishSentenceId])) { 
+            return  res.status(400).send({
+                 message:"Invalid English Sentence Id"
+             })
+     
+        }
         
         let query = {
-            standard,chapter,bookName
+            englishSentenceId,
+            isHidden:false,isDeleted:false
         }
 
         const skip = (page - 1) * limit;
          
-        const dbHindiSentences = await hindiSentenceModel.findHindiBook({ query })
+        if(loggedInUserId){
+       //console.log("loggedinuserid",loggedInUserId);
+            const dbHindiTranslates = await hindiSentenceModel.findHindiTranslatesIfUserLoggedIn({ query,skip,limit,loggedInUserId })
+
+            return res.status(200).send({
+                message:"book fetched ",
+                data:dbHindiTranslates
+            })
+        }
+         const dbHindiTranslates = await hindiSentenceModel.findHindiTranslates({ query,skip,limit })
 
         return res.status(200).send({
             message:"book fetched ",
+            data:dbHindiTranslates
         })
 
 
@@ -732,15 +925,15 @@ userFunctions.getEnglishBookWithHindi = async function (req, res, next) {
        
 
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit) || 50;
 
-        const standard = parseInt(req.query.class);
-        const chapter = parseInt(req.query.chapter);
-        const bookName = req.query.bookName;
+
+        const chapterId = parseInt(req.query.chapterId);
+    
 
 
         
-        if (!validationFunctions.checkIfAnyFieldEmpty([standard, chapter, bookName]))
+        if (!validationFunctions.checkIfAnyFieldEmpty([chapterId]))
         {
             return res.status(400).send({
                 message:"Invalid Request"
@@ -748,7 +941,7 @@ userFunctions.getEnglishBookWithHindi = async function (req, res, next) {
         }
         
         let query = {
-            standard,chapter,bookName
+            chapterId
         }
 
         const skip = (page - 1) * limit;

@@ -6,12 +6,12 @@ const checkAuth = (req, res, next) => {
         }
         
         return res.status(400).send({
-            message:"Session Expired. please Loigin"
+            message:"Session Expired. Please Login"
         })
     }
     catch (err) {
         return res.status(400).send({
-            message:"SEssion Expired. please Loigin"
+            message:"SEssion Expired. Please Login"
         })
    }
  

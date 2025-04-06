@@ -16,11 +16,12 @@ userRouter.delete('/deleteexplanation', checkAuth,userFunctions.deleteExplanatio
 
  
 userRouter.put('/updateprofile', checkAuth, userFunctions.updateUserDetails);
-
+userRouter.put('/incrementhindilikescount',checkAuth,userFunctions.incrementHindiLikesCount);
+userRouter.put('/decrementhindilikescount',checkAuth,userFunctions.decrementHindiLikesCount);
 userRouter.get('/getprofile', checkAuth, userFunctions.getProfile);
 
 
-userRouter.get('/getbook', userFunctions.getBook);
+userRouter.get('/getenglishchaptersentences', userFunctions.getEnglishBook);
 
 userRouter.get('/gethindibook', userFunctions.getEnglishBookWithHindi);
 userRouter.get("/getStandards",userFunctions.getStandards);
@@ -28,6 +29,7 @@ userRouter.post("/getSubjects",userFunctions.getSubjects);
 userRouter.post("/getBooks",userFunctions.getBooks);
 userRouter.post("/getChapters",userFunctions.getChapters);
 userRouter.get("/getDropdownOptions",userFunctions.getDropdownOptions);
+userRouter.get('/gethinditranslates',userFunctions.getHindiTranslatesOfSentence);
 
 userRouter.all('*', (req, res) => {
     return res.status(400).send({

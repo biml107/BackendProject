@@ -215,6 +215,63 @@ adminFunctions.deleteSentence = async function (req, res,next) {
         
         
 }
+adminFunctions.SoftDeleteSentence = async function (req, res,next) {
+    
+
+    try {
+
+        const { sentenceId } = req.body;//taking from request body
+
+        const userId = req.session.user.userId;
+        //validating is it mongodbid or not
+        if (!validationFunctions.validateUUID([sentenceId])) {
+            return res.status(400).send({
+                message: "Invalid sentence id",
+                
+            })
+    
+    
+        }
+
+
+       // let dbSentence = await sentenceModel.findSentenceById(sentenceId);
+        
+
+
+        const sentence = new sentenceModel({ sentenceId ,userId});
+
+        const dbSentence = await sentence.deleteSentence();
+        if (!dbSentence)
+        {
+            return res.status(403).send({
+                message:"No Sentence Found for deletion ",
+                
+              })
+            }
+        return res.status(200).send({
+          message:"Sentence deleted successfully",
+          
+        })
+
+
+
+
+        
+    }
+    catch (err) {
+        next(err)
+    }
+
+   
+
+//if sentence exist or not
+
+   
+
+    //deleting sentence
+    
+    
+}
 
 adminFunctions.readSentences = async function (req,res,next) {
     
@@ -265,6 +322,7 @@ adminFunctions.readSentences = async function (req,res,next) {
     }
 
 }
+
 adminFunctions.importChapter= async function (req, res, next) {
 
     try {

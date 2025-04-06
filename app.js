@@ -28,7 +28,7 @@ app.use(limiter);
 app.use(helmet());
 app.use(express.json());//this middle ware convert JSON data to javascript object and attached in req.body .actually in req.body we send json so in api use it as js object express.json convert it
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({credentials:true,origin:'http://localhost:3000'}));
+app.use(cors({credentials:true,origin: ['http://localhost:3000', 'http://localhost:3002']}));
 
 app.use(connection.sessionMiddleware());
 app.use(requestLogger);

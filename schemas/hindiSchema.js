@@ -28,8 +28,23 @@ const hindiSentenceSchema = new Schema({
         type: String,
         required:false
     },
+    isHidden: {
+        type: Boolean,
+        required: true, // Indicates that this field is mandatory
+        default: false, // Default value if not provided
+      },
+      isDeleted: {
+        type: Boolean,
+        required: true, // Indicates that this field is mandatory
+        default: false, // Default value if not provided
+      },
+      deletionDateTime:{
+        type: Date, default: null 
+      }
+     
+
     
-})
+}, { timestamps: true })
 
 
 
