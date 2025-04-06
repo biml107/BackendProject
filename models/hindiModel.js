@@ -107,6 +107,21 @@ let hindiSentenceModel = class {
             }
         })
 }
+softDeleteHindiTranslate() {
+     
+
+    return new Promise(async(resolve,reject)=>{
+        try {
+             
+            const dbHindiSentence = await hindiCollection.findOneAndUpdate({uuid: this.hindiSentenceId,userId:this.userId},{isDeleted:true,deletionDateTime: new Date()},{ returnDocument: 'after' });
+                return resolve(dbHindiSentence);
+      
+        }
+        catch(err){
+            return reject(err);
+        }
+    })
+}
 
 
     

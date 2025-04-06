@@ -38,10 +38,13 @@ const hindiSentenceSchema = new Schema({
         required: true, // Indicates that this field is mandatory
         default: false, // Default value if not provided
       },
+      deletionDateTime:{
+        type: Date, default: null 
+      }
      
 
     
-})
+}, { timestamps: true })
 
 
 

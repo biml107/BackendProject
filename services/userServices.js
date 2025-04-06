@@ -8,7 +8,7 @@ import HindiSentenceLikesModel from '../models/hindilikeModel.js';
 
 import validator from 'validator';
 import he from 'he';
-
+const HINDI_SENTENCE_SIZE=10;
 
 const userFunctions = {};
 
@@ -58,7 +58,8 @@ userFunctions.addHindi = async function (req, res, next) {
 
         //checking if the english sentence is present or not
 
-        const dbEnglishSentence = sentenceModel.findSentenceById({ sentenceId: englishSentenceId });
+        const dbEnglishSentence = await sentenceModel.findSentenceById({ sentenceId: englishSentenceId });
+         
         if (!dbEnglishSentence)
         {
             
@@ -67,7 +68,11 @@ userFunctions.addHindi = async function (req, res, next) {
             //     message:"English Sentence not availabe"
             // })
         }
-        
+        if(hindi.length>dbEnglishSentence.value.length*HINDI_SENTENCE_SIZE||hindiExplain.length>dbEnglishSentence.value.length*HINDI_SENTENCE_SIZE*2){
+            return res.status(409).send({
+                message:"Exceed length"
+            })
+        }
 
         //checking number of hindi sentence added by the specefic user
         const countSentence = await hindiSentenceModel.countAddedHindi({ englishSentenceId, userId });
@@ -300,6 +305,44 @@ userFunctions.decrementHindiLikesCount = async function (req, res, next) {
 }
 
 userFunctions.deleteHindi = async function (req, res, next) {
+    
+    try {
+        const { hindiSentenceId } = req.body;
+        const userId = req.session.user.userId;
+        if (!validationFunctions.validateUUID([hindiSentenceId])) {
+            return  res.status(400).send({
+                 message:"Invalid mongo Id"
+             })
+     
+        }
+
+        const hindiModelObject = new hindiSentenceModel({ hindiSentenceId ,userId});
+
+        const dbHindiSentence = await hindiModelObject.deleteHindiTranslate();
+
+        if (!dbHindiSentence)
+        {
+            
+            return res.status(403).send({
+                message:"No Document found to delete or not authorised"
+            })
+        }
+        
+        return res.status(200).send({
+            message:"Sentence Deleted Successfully"
+        })
+
+
+
+
+
+    }
+    catch (err)
+    {
+        next(err)
+    }
+}
+userFunctions.softDeleteHindi = async function (req, res, next) {
     
     try {
         const { hindiSentenceId } = req.body;
