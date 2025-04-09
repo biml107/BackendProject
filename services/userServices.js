@@ -564,7 +564,7 @@ userFunctions.registerUser = async function (req, res, next) {
         
         let { email, username, password, name, phoneNumber, profilePic, addressLine,village,postOffice,policeStation,dist,state,country,pin } = req.body;
         
-        
+       console.log(email, username, password, name,phoneNumber) 
         if (!validationFunctions.checkIfAnyFieldEmpty([email, username, password, name,phoneNumber])) {
             throwError("Insufficient Credentials for registration ", 404);
         }

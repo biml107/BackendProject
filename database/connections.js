@@ -10,7 +10,8 @@ dotenv.config();
 const connection = {};
 
 //variables required for database connections
-const mongoDatabaseURI = process.env.LOCAL_MONGODB_URI;
+//const mongoDatabaseURI = process.env.LOCAL_MONGODB_URI;
+const mongoDatabaseURI = process.env.bmlkumar2000Project0URI;
 const databaseName = 'Dictionary';
 
 
@@ -32,7 +33,7 @@ connection.createConnectionToMongo = async() => {
     }
     catch (err) {
         
-        console.error("Failed to connect MongoDB");
+        console.error("Failed to connect MongoDB",err);
         process.exit(1);
 
     }
