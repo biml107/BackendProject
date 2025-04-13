@@ -4,9 +4,9 @@ import userRouter from './userRouter.js';
 import authRouter from './authRouter.js';
 const mainRouter = express.Router();
 
-mainRouter.use('/api/auth', authRouter);
-mainRouter.use('/api/admin', adminRouter);
-mainRouter.use('/api/user', userRouter);
+mainRouter.use('/auth', authRouter);
+mainRouter.use('/admin', adminRouter);
+mainRouter.use('/user', userRouter);
 
 
 mainRouter.all('*', (req, res) => {
